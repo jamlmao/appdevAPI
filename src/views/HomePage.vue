@@ -1,56 +1,87 @@
 <template>
   <ion-page>
     <ion-header :translucent="true">
-      <ion-toolbar>
-        <ion-title>Blank</ion-title>
+      <ion-toolbar color="primary">
+        <ion-title style="text-align:center;">REGIONS</ion-title>
       </ion-toolbar>
     </ion-header>
 
     <ion-content :fullscreen="true">
       <ion-header collapse="condense">
-        <ion-toolbar>
-          <ion-title size="large">Blank</ion-title>
-        </ion-toolbar>
+        <ion-toolbar><ion-title style="text-align:center;">REGIONS</ion-title></ion-toolbar>
       </ion-header>
 
-      <div id="container">
-        <strong>Ready to create an app?</strong>
-        <p>Start with Ionic <a target="_blank" rel="noopener noreferrer" href="https://ionicframework.com/docs/components">UI Components</a></p>
-      </div>
+      <ion-list>
+        <ion-item v-for="region in regions" :key="region.code" @click="handleSelectRegion(region)">
+          <ion-label>
+            <h3>{{ region.regionName }}</h3>
+            <p>{{ region.name }}</p>
+          </ion-label>
+        </ion-item>
+      </ion-list>
     </ion-content>
   </ion-page>
 </template>
 
-<script setup lang="ts">
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/vue';
+<script lang="ts">
+import { IonContent, IonHeader, IonItem, IonList, IonPage, IonTitle, IonToolbar } from '@ionic/vue';
+import { ref, onMounted, computed } from 'vue';
+import { useRouter } from 'vue-router';
+import { forRegions, forProvinces } from '@/api';
+
+export default {
+  components: {
+    IonContent,
+    IonHeader,
+    IonItem,
+    IonList,
+    IonPage,
+    IonTitle,
+    IonToolbar,
+  },
+  setup() {
+    const regions = ref([]);
+    const selectedRegion = ref(null);
+    const provinces = ref([]);
+    const router = useRouter();
+
+    const fetchRegions = async () => {
+      regions.value = await forRegions();
+    };
+
+    const fetchProvinces = async (regionCode) => {
+      provinces.value = await forProvinces(regionCode);
+    };
+
+    const handleSelectRegion = (region) => {
+      selectedRegion.value = region;
+      fetchProvinces(region.code);
+      router.push(`/provinces/${region.code}`);
+    };
+
+    onMounted(() => {
+      fetchRegions();
+    });
+
+    const filteredProvinces = computed(() => {
+      if (selectedRegion.value) {
+        return provinces.value.filter((province) => province.regionCode === selectedRegion.value.code);
+      }
+      return [];
+    });
+
+    return {
+      regions,
+      selectedRegion,
+      filteredProvinces,
+      handleSelectRegion,
+    };
+  },
+};
 </script>
 
 <style scoped>
-#container {
-  text-align: center;
-  
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-#container strong {
-  font-size: 20px;
-  line-height: 26px;
-}
-
-#container p {
-  font-size: 16px;
-  line-height: 22px;
-  
-  color: #8c8c8c;
-  
-  margin: 0;
-}
-
-#container a {
-  text-decoration: none;
+body {
+  background-color: antiquewhite;
 }
 </style>
